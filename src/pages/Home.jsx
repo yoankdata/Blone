@@ -1,326 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Monitor,
-    BarChart3,
-    Workflow,
+    Sparkles,
     ArrowRight,
     CheckCircle2,
-    Menu,
-    X,
-    ArrowLeft,
-    Sparkles,
-    Zap,
     Loader2,
-    Send
+    Send,
+    X
 } from 'lucide-react';
-
-// --- FIREBASE IMPORTS ---
-// Ces imports sont nécessaires pour interagir avec la base de données Firestore.
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, collection, addDoc, setLogLevel } from 'firebase/firestore';
-
-// Récupération des variables sécurisées fournies par l'environnement (Canvas/Antigravity)
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-
-// --- DATA & CONTENT ---
-
-const projects = [
-    {
-        slug: "kademya",
-        title: "Kademya",
-        subtitle: "Plateforme éducative en ligne",
-        context: "Kademya souhaitait moderniser son approche pédagogique en rendant ses ressources accessibles via une plateforme web intuitive.",
-        technos: ["Next.js", "Node.js", "Stripe API"],
-        features: ["Système de gestion de cours", "Paiements sécurisés", "Espace étudiant"],
-        results: "Augmentation de 40% des inscriptions en 3 mois et simplification de la gestion administrative.",
-        color: "from-blue-600 to-indigo-900"
-    },
-    {
-        slug: "rize",
-        title: "RIZE",
-        subtitle: "Application mobile & Web",
-        context: "Une startup fintech ayant besoin d'une landing page haute conversion pour son lancement.",
-        technos: ["React", "Tailwind CSS", "Framer Motion"],
-        features: ["Animations fluides", "Formulaire de lead capture", "Intégration CRM"],
-        results: "2000+ inscrits sur la liste d'attente avant le lancement officiel.",
-        color: "from-purple-600 to-indigo-900"
-    },
-    {
-        slug: "vincent-marillier",
-        title: "VincentMarillier.com",
-        subtitle: "Portfolio Photographe",
-        context: "Refonte du portfolio d'un photographe professionnel pour mettre en valeur ses clichés haute définition.",
-        technos: ["Next.js", "Image Optimization", "Sanity CMS"],
-        features: ["Galerie masonry", "Chargement progressif", "SEO optimisé pour l'art"],
-        results: "Temps de chargement divisé par 3, meilleure visibilité sur Google.",
-        color: "from-stone-700 to-stone-900"
-    },
-    {
-        slug: "dashboard-cafe-luma",
-        title: "Dashboard BI – Café Luma",
-        subtitle: "Business Intelligence",
-        context: "Café Luma avait besoin de visibilité sur ses pics de fréquentation et ses marges par produit.",
-        technos: ["Power BI", "Excel Automation", "SQL"],
-        features: ["Suivi des ventes temps réel", "Analyse des coûts", "Rapports automatisés"],
-        results: "Optimisation des stocks réduisant le gaspillage de 15%.",
-        color: "from-orange-500 to-red-900"
-    }
-];
-
-const services = [
-    {
-        title: "Sites Web rapides et premium",
-        description: "Un site vitrine moderne, responsive et professionnel — livré en 48 à 72 heures. Design soigné, navigation fluide, compatibilité mobile et SEO de base.",
-        icon: Monitor
-    },
-    {
-        title: "Data & Business Intelligence",
-        description: "Dashboards clairs et intuitifs sous Power BI ou Looker Studio pour suivre vos ventes, votre fréquentation, votre performance. Visualisation simple et exploitable pour prendre de bonnes décisions, rapidement.",
-        icon: BarChart3
-    },
-    {
-        title: "Automatisations essentielles",
-        description: "Automatisez vos processus : formulaires → WhatsApp / email, suivis clients, notifications, etc. Moins de tâches manuelles = plus de temps pour ce qui compte vraiment.",
-        icon: Workflow
-    }
-];
-
-const pricing = [
-    { title: "Automatisation simple", price: "60 000 FCFA", type: "Processus" },
-    { title: "Site vitrine", price: "120 000 FCFA", type: "Web", featured: true },
-    { title: "Dashboard BI", price: "150 000 FCFA", type: "Data" },
-];
-
-// --- UTILS & STYLES ---
+import { Link, useLocation } from 'react-router-dom';
+import { services, pricing, projects } from '../data/content';
 
 // Premium gradient text class
 const gradientText = "bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-300";
 // Glass card base styles
 const glassCardDark = "bg-[#0A1A2F]/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]";
 
-// --- COMPONENTS ---
-
-const Navigation = ({ activeView, onViewChange }) => {
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    const navLinkClass = "relative text-sm font-medium text-gray-300 hover:text-white transition-colors cursor-pointer group";
-
-    const scrollTo = (id) => {
-        setMobileMenuOpen(false);
-        if (activeView !== 'home') {
-            onViewChange('home');
-            setTimeout(() => {
-                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-        } else {
-            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
-    return (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isScrolled ? 'bg-[#0A1A2F]/70 backdrop-blur-xl border-b border-white/5 shadow-2xl py-2' : 'bg-transparent py-6'}`}>
-            <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-                <div
-                    onClick={() => scrollTo('hero')}
-                    className="text-2xl font-bold tracking-tighter text-white cursor-pointer flex items-center gap-1 group"
-                >
-                    Blone Agency
-                    <span className="w-2 h-2 rounded-full bg-[#1C7EF2] shadow-[0_0_10px_#1C7EF2] group-hover:scale-150 transition-transform duration-300"></span>
-                </div>
-
-                {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-10">
-                    {['Services', 'Projets', 'Tarifs'].map((item) => (
-                        <span key={item} onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))} className={navLinkClass}>
-                            {item}
-                            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#1C7EF2] transition-all duration-300 group-hover:w-full"></span>
-                        </span>
-                    ))}
-                    <button
-                        onClick={() => scrollTo('contact')}
-                        className="group relative px-6 py-2.5 rounded-full overflow-hidden bg-white/5 border border-white/10 hover:border-[#1C7EF2]/50 transition-all duration-300"
-                    >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#1C7EF2]/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <span className="relative text-sm font-semibold text-white group-hover:text-blue-200 transition-colors">Contact</span>
-                    </button>
-                </div>
-
-                {/* Mobile Toggle */}
-                <button className="md:hidden text-white p-2 rounded-lg bg-white/5" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                    {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-                </button>
-            </div>
-
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-                <div className="absolute top-full left-0 w-full bg-[#0A1A2F]/95 backdrop-blur-xl border-b border-white/10 p-6 flex flex-col gap-6 md:hidden shadow-2xl animate-in slide-in-from-top-2">
-                    {['Services', 'Projets', 'Tarifs'].map((item) => (
-                        <span key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-gray-300 text-lg font-medium tracking-tight">{item}</span>
-                    ))}
-                    <button onClick={() => scrollTo('contact')} className="bg-[#1C7EF2] text-white py-4 rounded-xl font-bold shadow-[0_0_20px_rgba(28,126,242,0.3)]">
-                        Demander un devis
-                    </button>
-                </div>
-            )}
-        </nav>
-    );
-};
-
-const Footer = () => (
-    <footer className="relative bg-[#050D18] border-t border-white/5 pt-24 pb-12 text-white overflow-hidden">
-        {/* Background Glow */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#1C7EF2]/10 rounded-full blur-[128px]"></div>
-
-        <div className="container relative mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-start mb-16">
-                <div className="mb-8 md:mb-0 max-w-sm">
-                    <span className="text-3xl font-bold tracking-tighter text-white block mb-4">Blone Agency.</span>
-                    <p className="text-gray-400 text-sm leading-relaxed">
-                        Solutions digitales premium pour entreprises ambitieuses. <br />
-                        Web · Data · Automation
-                    </p>
-                </div>
-                <a href="mailto:contact@bloneagency.fr" className="group flex items-center gap-3 text-xl font-light hover:text-[#1C7EF2] transition-colors">
-                    <span className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center group-hover:border-[#1C7EF2] transition-colors">
-                        <ArrowRight className="w-4 h-4 group-hover:-rotate-45 transition-transform duration-300" />
-                    </span>
-                    contact@bloneagency.fr
-                </a>
-            </div>
-            <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-medium uppercase tracking-widest">
-                <p>© {new Date().getFullYear()} Blone Agency.</p>
-                <div className="flex gap-8 mt-4 md:mt-0">
-                    <span className="hover:text-white cursor-pointer transition-colors">Mentions légales</span>
-                    <span className="hover:text-white cursor-pointer transition-colors">Confidentialité</span>
-                </div>
-            </div>
-        </div>
-    </footer>
-);
-
-// --- FORM SUBMISSION LOGIC ---
-
-// Définit le chemin de la collection Firestore pour les contacts (Collection publique)
-const getContactCollectionPath = (currentAppId) => `/artifacts/${currentAppId}/public/data/contacts`;
-
-/**
- * Envoie les données du formulaire à Firebase Firestore.
- * @param {object} formData - Les données du formulaire.
- * @param {object} dbInstance - L'instance Firestore initialisée.
- * @param {object} authInstance - L'instance Auth initialisée.
- */
-const submitContactForm = async (formData, dbInstance, authInstance) => {
-    if (!dbInstance) {
-        console.error("Firestore DB is not initialized.");
-        throw new Error("Base de données non initialisée. Veuillez réessayer.");
-    }
-    if (!authInstance || !authInstance.currentUser) {
-        console.error("User is not authenticated for Firestore write.");
-        throw new Error("Erreur d'authentification. Impossible d'envoyer les données.");
-    }
-
-    try {
-        const collectionPath = getContactCollectionPath(appId);
-
-        const docRef = await addDoc(collection(dbInstance, collectionPath), {
-            ...formData,
-            timestamp: new Date().toISOString(),
-            userId: authInstance.currentUser.uid // Utilise l'UID de l'utilisateur authentifié
-        });
-        console.log("Document successfully written with ID: ", docRef.id);
-        return { success: true, docId: docRef.id };
-    } catch (e) {
-        console.error("Error adding document: ", e);
-        throw new Error("Erreur lors de l'envoi. Veuillez réessayer. Détails : " + e.message);
-    }
-};
-
-// --- PAGES ---
-
-const ProjectDetailView = ({ slug, onBack, onStartSimilar }) => {
-    const project = projects.find(p => p.slug === slug);
-
-    if (!project) return <div className="text-white">Projet introuvable</div>;
-
-    return (
-        <div className="bg-[#050D18] min-h-screen animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="fixed inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: "url(https://placehold.co/1920x1080/050D18/FFF?text=Placeholder+Image)" }}></div>
-            <div className="container mx-auto px-6 py-24 relative z-10">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 text-white/70 hover:text-[#1C7EF2] transition-colors mb-12 text-sm font-semibold"
-                >
-                    <ArrowLeft className="w-4 h-4" /> Retour aux projets
-                </button>
-
-                <div className="grid lg:grid-cols-3 gap-16">
-                    <div className="lg:col-span-2">
-                        <h1 className="text-5xl font-bold text-white mb-3 tracking-tighter">{project.title}</h1>
-                        <p className="text-2xl text-gray-400 mb-8 font-light">{project.subtitle}</p>
-
-                        <div className={`w-full h-80 rounded-xl mb-12 shadow-2xl bg-gradient-to-br ${project.color} flex items-center justify-center p-12`}>
-                            <Zap className="w-12 h-12 text-white/50 animate-pulse" />
-                        </div>
-
-                        <h2 className="text-3xl font-bold text-white mb-6">Le Contexte</h2>
-                        <p className="text-gray-300 text-lg leading-relaxed mb-12">{project.context}</p>
-
-                        <h2 className="text-3xl font-bold text-white mb-6">Les Résultats</h2>
-                        <div className="text-white text-xl font-medium p-6 border-l-4 border-[#1C7EF2] bg-[#1C7EF2]/10 rounded-r-lg shadow-lg">
-                            "{project.results}"
-                        </div>
-
-                    </div>
-
-                    {/* Sidebar */}
-                    <div className="lg:col-span-1 space-y-10">
-                        <div className={`${glassCardDark} p-6 rounded-xl border-white/5`}>
-                            <h3 className="text-xl font-bold text-white mb-4">Détails Techniques</h3>
-                            <div className="space-y-3">
-                                {project.technos.map((tech, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-sm text-gray-300">
-                                        <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-                                        {tech}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className={`${glassCardDark} p-6 rounded-xl border-white/5`}>
-                            <h3 className="text-xl font-bold text-white mb-4">Fonctionnalités Clés</h3>
-                            <ul className="list-disc list-inside space-y-2 text-sm text-gray-300 ml-2">
-                                {project.features.map((feature, i) => (
-                                    <li key={i}>{feature}</li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <button
-                            onClick={() => onStartSimilar(project.title)}
-                            className="w-full group relative px-8 py-4 bg-white/5 hover:bg-[#1C7EF2] rounded-xl font-bold text-lg text-white shadow-[0_0_20px_-10px_rgba(28,126,242,0.5)] transition-all overflow-hidden border border-white/10 hover:border-transparent"
-                        >
-                            <span className="relative z-10">Démarrer un projet similaire</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <Footer />
-        </div>
-    );
-};
-
-const HomeView = ({ setView, submitHandler, isReady, formStatus }) => {
+const Home = ({ submitHandler, isReady, formStatus }) => {
     // Gestion du formulaire
     const [formData, setFormData] = useState({
         name: '',
@@ -328,6 +23,19 @@ const HomeView = ({ setView, submitHandler, isReady, formStatus }) => {
         service: 'Site Web Premium',
         message: ''
     });
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.scrollTo) {
+            const element = document.getElementById(location.state.scrollTo);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                // Clean up state to prevent scroll on refresh? 
+                // React Router state persists, but maybe it's fine for now.
+                // To be cleaner we could replace history, but let's keep it simple.
+            }
+        }
+    }, [location]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -492,10 +200,10 @@ const HomeView = ({ setView, submitHandler, isReady, formStatus }) => {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {projects.map((p) => (
-                            <div
+                            <Link
                                 key={p.slug}
-                                onClick={() => setView(p.slug)}
-                                className="group relative h-[400px] cursor-pointer rounded-2xl overflow-hidden border border-white/5 transition-all hover:border-white/20"
+                                to={'/project/' + p.slug}
+                                className="group relative h-[400px] cursor-pointer rounded-2xl overflow-hidden border border-white/5 transition-all hover:border-white/20 block"
                             >
                                 {/* Background Gradient */}
                                 <div className={`absolute inset-0 bg-gradient-to-br ${p.color} opacity-80 transition-opacity duration-700`}></div>
@@ -514,7 +222,7 @@ const HomeView = ({ setView, submitHandler, isReady, formStatus }) => {
                                         Découvrir <ArrowRight className="w-4 h-4" />
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
@@ -652,138 +360,4 @@ const HomeView = ({ setView, submitHandler, isReady, formStatus }) => {
     );
 };
 
-// --- MAIN APPLICATION COMPONENT ---
-
-const App = () => {
-    const [activeView, setActiveView] = useState('home');
-    const [projectSlug, setProjectSlug] = useState(null);
-
-    // États pour Firebase
-    const [dbInstance, setDbInstance] = useState(null);
-    const [authInstance, setAuthInstance] = useState(null);
-    const [isFirebaseReady, setIsFirebaseReady] = useState(false);
-
-    // Gestion du formulaire au niveau global (pour le HomeView)
-    const [formStatus, setFormStatus] = useState({
-        loading: false,
-        success: false,
-        error: null
-    });
-
-    // 1. INITIALISATION DE FIREBASE & AUTHENTIFICATION
-    useEffect(() => {
-        const initializeFirebase = async () => {
-            try {
-                if (!Object.keys(firebaseConfig).length) {
-                    console.error("Firebase Config is missing or empty.");
-                    return;
-                }
-
-                const app = initializeApp(firebaseConfig);
-                const db = getFirestore(app);
-                const auth = getAuth(app);
-
-                setLogLevel('debug'); // Active les logs de Firebase
-
-                // Authentification
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Mise à jour des états une fois la connexion établie
-                setDbInstance(db);
-                setAuthInstance(auth);
-                setIsFirebaseReady(true);
-                console.log(`Firebase Initialized. Current User ID: ${auth.currentUser?.uid || 'anonymous'}`);
-
-            } catch (error) {
-                console.error("Firebase initialization or sign-in failed:", error);
-                // Si l'initialisation échoue, on empêche l'envoi de formulaire
-                setIsFirebaseReady(false);
-                setFormStatus(prev => ({ ...prev, error: "Erreur de connexion à la base de données. Formulaire désactivé." }));
-            }
-        };
-        initializeFirebase();
-    }, []); // Exécuté une seule fois au montage du composant
-
-    // 2. GESTIONNAIRE DE SOUMISSION DU FORMULAIRE
-    const submitHandler = useCallback(async (formData, setFormData) => {
-        if (!isFirebaseReady) {
-            setFormStatus({ loading: false, success: false, error: "Base de données non prête. Veuillez attendre." });
-            return;
-        }
-
-        setFormStatus({ loading: true, success: false, error: null });
-
-        try {
-            await submitContactForm(formData, dbInstance, authInstance);
-            setFormStatus({ loading: false, success: true, error: null });
-
-            // Réinitialiser le formulaire après succès
-            setFormData({
-                name: '',
-                email: '',
-                service: 'Site Web Premium',
-                message: ''
-            });
-
-            // Optionnel : Scroller vers le haut du formulaire pour voir le message de succès
-            document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-
-        } catch (error) {
-            console.error(error);
-            setFormStatus({ loading: false, success: false, error: error.message || "Une erreur inconnue est survenue." });
-        }
-    }, [isFirebaseReady, dbInstance, authInstance]); // Dépendances pour s'assurer que les instances sont prêtes
-
-    // Navigation
-    const handleViewChange = (newView) => {
-        if (projects.some(p => p.slug === newView)) {
-            setProjectSlug(newView);
-            setActiveView('detail');
-        } else if (newView === 'home') {
-            setActiveView('home');
-            setProjectSlug(null);
-        }
-    };
-
-    const handleStartSimilar = (projectTitle) => {
-        handleViewChange('home');
-        setTimeout(() => {
-            document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-            // Pour un vrai formulaire, on pourrait pré-remplir le champ 'service'
-        }, 100);
-    }
-
-    return (
-        <div className="min-h-screen bg-[#0A1A2F] text-white font-inter">
-            {/* Configuration globale pour le font Inter (si non pris en charge globalement) */}
-            <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');`}</style>
-
-            <Navigation activeView={activeView} onViewChange={handleViewChange} />
-
-            {activeView === 'home' && (
-                <HomeView
-                    setView={handleViewChange}
-                    submitHandler={submitHandler}
-                    isReady={isFirebaseReady}
-                    formStatus={formStatus}
-                />
-            )}
-
-            {activeView === 'detail' && projectSlug && (
-                <ProjectDetailView
-                    slug={projectSlug}
-                    onBack={() => handleViewChange('home')}
-                    onStartSimilar={handleStartSimilar}
-                />
-            )}
-
-            {activeView === 'home' && <Footer />}
-        </div>
-    );
-};
-
-export default App;
+export default Home;
