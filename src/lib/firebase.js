@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
+// Configuration Firebase récupérée depuis les variables d'environnement (.env)
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -11,53 +12,56 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
+// 1. Initialisation de l'application Firebase
 const app = initializeApp(firebaseConfig);
+
+// 2. Initialisation et export des services Auth et Firestore
+// Ces lignes manquaient probablement dans votre version actuelle
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Sign in anonymously immediately
+// Connexion anonyme automatique au chargement
 signInAnonymously(auth).catch((error) => {
-    console.error("Error signing in anonymously:", error);
+    console.error("Erreur d'authentification anonyme:", error);
 });
 
-// App ID for collection path (defaulting if not set)
-const appId = import.meta.env.VITE_APP_ID || 'default-app-id';
-
-const getContactCollectionPath = (currentAppId) => `/artifacts/${currentAppId}/public/data/contacts`;
+// Nom de la collection Firestore
+const COLLECTION_NAME = 'contacts';
 
 /**
  * Envoie les données du formulaire à Firebase Firestore.
- * @param {object} formData - Les données du formulaire.
  */
 export const submitContactForm = async (formData) => {
-    if (!auth.currentUser) {
-        // Wait a bit or try to sign in again? 
-        // For simplicity, we assume auth is ready or will be ready.
-        // If strictly needed, we could await a promise here.
-        console.warn("User not authenticated yet, attempting to wait...");
-        // In a real app, we might want to handle this more robustly.
-    }
+    // Promesse pour s'assurer que l'utilisateur est authentifié avant d'écrire
+    const ensureAuth = new Promise((resolve, reject) => {
+        if (auth.currentUser) {
+            resolve(auth.currentUser);
+        } else {
+            const unsubscribe = onAuthStateChanged(auth, (user) => {
+                unsubscribe();
+                if (user) resolve(user);
+                else {
+                    signInAnonymously(auth).then(({ user }) => resolve(user)).catch(reject);
+                }
+            });
+        }
+    });
 
     try {
-        const collectionPath = getContactCollectionPath(appId);
+        const user = await ensureAuth;
 
-        // Ensure user is signed in before writing
-        if (!auth.currentUser) {
-            await signInAnonymously(auth);
-        }
-
-        const docRef = await addDoc(collection(db, collectionPath), {
+        const docRef = await addDoc(collection(db, COLLECTION_NAME), {
             ...formData,
             timestamp: new Date().toISOString(),
-            userId: auth.currentUser?.uid || 'anonymous'
+            userId: user.uid
         });
-        console.log("Document successfully written with ID: ", docRef.id);
+        console.log("Document écrit avec succès, ID: ", docRef.id);
         return { success: true, docId: docRef.id };
     } catch (e) {
-        console.error("Error adding document: ", e);
-        throw new Error("Erreur lors de l'envoi. Veuillez réessayer. Détails : " + e.message);
+        console.error("Erreur lors de l'ajout du document: ", e);
+        throw new Error("Erreur lors de l'envoi. Veuillez vérifier votre connexion et réessayer.");
     }
 };
 
+// Export des instances pour les utiliser ailleurs si besoin
 export { auth, db };
