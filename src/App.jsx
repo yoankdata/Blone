@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 
 // --- FIREBASE IMPORTS ---
 import { submitContactForm } from './lib/firebase';
@@ -13,6 +14,8 @@ import ProjectDetail from './pages/ProjectDetail';
 // --- MAIN APPLICATION COMPONENT ---
 
 const App = () => {
+    const location = useLocation();
+
     // Gestion du formulaire au niveau global (pour le HomeView)
     const [formStatus, setFormStatus] = useState({
         loading: false,
@@ -52,16 +55,18 @@ const App = () => {
 
             <Navigation />
 
-            <Routes>
-                <Route path="/" element={
-                    <Home
-                        submitHandler={submitHandler}
-                        isReady={true} // Always true as we handle auth internally in lib/firebase
-                        formStatus={formStatus}
-                    />
-                } />
-                <Route path="/project/:slug" element={<ProjectDetail />} />
-            </Routes>
+            <AnimatePresence mode="wait">
+                <Routes location={location} key={location.pathname}>
+                    <Route path="/" element={
+                        <Home
+                            submitHandler={submitHandler}
+                            isReady={true} // Always true as we handle auth internally in lib/firebase
+                            formStatus={formStatus}
+                        />
+                    } />
+                    <Route path="/realisations/:slug" element={<ProjectDetail />} />
+                </Routes>
+            </AnimatePresence>
 
             <Footer />
         </div>

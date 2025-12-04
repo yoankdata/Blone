@@ -8,12 +8,39 @@ import {
     X
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { services, pricing, projects } from '../data/content';
+import { SpotlightCard } from '../components/SpotlightCard';
+import PageTransition from '../components/PageTransition';
 
 // Premium gradient text class
 const gradientText = "bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-300";
 // Glass card base styles
 const glassCardDark = "bg-[#0A1A2F]/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]";
+
+// Animation Variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2,
+            delayChildren: 0.3
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.8,
+            ease: [0.2, 0.65, 0.3, 0.9]
+        }
+    }
+};
 
 const Home = ({ submitHandler, isReady, formStatus }) => {
     // Gestion du formulaire
@@ -30,9 +57,6 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
             const element = document.getElementById(location.state.scrollTo);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
-                // Clean up state to prevent scroll on refresh? 
-                // React Router state persists, but maybe it's fine for now.
-                // To be cleaner we could replace history, but let's keep it simple.
             }
         }
     }, [location]);
@@ -49,7 +73,7 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
 
 
     return (
-        <>
+        <PageTransition>
             {/* HERO SECTION */}
             <section id="hero" className="relative pt-40 pb-32 lg:pt-52 lg:pb-40 bg-[#0A1A2F] overflow-hidden min-h-screen flex items-center">
                 {/* Animated Background Elements */}
@@ -57,22 +81,27 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
                 <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-[#1C7EF2]/20 rounded-full blur-[120px] animate-pulse duration-[4000ms]"></div>
                 <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[100px]"></div>
 
-                <div className="container relative mx-auto px-6 text-center z-10">
-                    <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <motion.div
+                    className="container relative mx-auto px-6 text-center z-10"
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                >
+                    <motion.div variants={itemVariants} className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-lg">
                         <Sparkles className="w-3 h-3 text-[#1C7EF2]" />
                         <span className="text-xs font-semibold tracking-widest uppercase text-gray-300">Agence Digitale Premium</span>
-                    </div>
+                    </motion.div>
 
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+                    <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 leading-[1.1]">
                         Web, Data, <br className="hidden md:block" />
                         <span className={gradientText}>Automatisation.</span>
-                    </h1>
+                    </motion.h1>
 
-                    <p className="text-lg md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                    <motion.p variants={itemVariants} className="text-lg md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
                         Des solutions qui accélèrent votre activité. Sites performants et dashboards intelligents pour les entreprises modernes.
-                    </p>
+                    </motion.p>
 
-                    <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                    <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <button
                             onClick={() => document.getElementById('contact').scrollIntoView({ behavior: 'smooth' })}
                             className="group relative px-8 py-4 bg-[#1C7EF2] hover:bg-blue-600 rounded-xl font-bold text-lg text-white shadow-[0_0_40px_-10px_rgba(28,126,242,0.5)] transition-all hover:-translate-y-1 overflow-hidden"
@@ -88,8 +117,8 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
                             Voir nos projets
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             </section>
 
             {/* SERVICES SECTION */}
@@ -105,13 +134,13 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {services.map((s, i) => (
-                            <div key={i} className={`${glassCardDark} p-8 rounded-2xl group hover:border-[#1C7EF2]/30 transition-all duration-500 hover:-translate-y-2`}>
+                            <SpotlightCard key={i} className="p-8 h-full">
                                 <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-8 border border-white/10 group-hover:bg-[#1C7EF2] group-hover:text-white group-hover:border-[#1C7EF2] transition-all duration-500 shadow-lg">
                                     <s.icon className="text-[#1C7EF2] group-hover:text-white w-7 h-7 transition-colors" />
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-4">{s.title}</h3>
                                 <p className="text-gray-400 leading-relaxed font-light">{s.description}</p>
-                            </div>
+                            </SpotlightCard>
                         ))}
                     </div>
                 </div>
@@ -200,29 +229,31 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {projects.map((p) => (
-                            <Link
+                            <motion.div
                                 key={p.slug}
-                                to={'/project/' + p.slug}
-                                className="group relative h-[400px] cursor-pointer rounded-2xl overflow-hidden border border-white/5 transition-all hover:border-white/20 block"
+                                whileHover={{ y: -10 }}
+                                className="group relative h-[400px] cursor-pointer rounded-2xl overflow-hidden border border-white/5 transition-colors hover:border-white/20 block"
                             >
-                                {/* Background Gradient */}
-                                <div className={`absolute inset-0 bg-gradient-to-br ${p.color} opacity-80 transition-opacity duration-700`}></div>
+                                <Link to={'/realisations/' + p.slug} className="block h-full w-full">
+                                    {/* Background Gradient */}
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${p.color} opacity-80 transition-opacity duration-700`}></div>
 
-                                {/* Hover Reveal Image/Effect */}
-                                <div className="absolute inset-0 bg-[#0A1A2F] opacity-0 group-hover:opacity-90 transition-opacity duration-500 backdrop-blur-sm"></div>
+                                    {/* Hover Reveal Image/Effect */}
+                                    <div className="absolute inset-0 bg-[#0A1A2F] opacity-0 group-hover:opacity-90 transition-opacity duration-500 backdrop-blur-sm"></div>
 
-                                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                                    <span className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 group-hover:text-[#1C7EF2] transition-colors">{p.technos[0]}</span>
-                                    <h3 className="text-2xl font-bold text-white mb-2 leading-tight group-hover:translate-y-[-4px] transition-transform duration-300">{p.title}</h3>
-                                    <p className="text-sm text-gray-300 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform translate-y-4 group-hover:translate-y-0 delay-75">
-                                        {p.subtitle}
-                                    </p>
+                                    <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                                        <span className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 group-hover:text-[#1C7EF2] transition-colors">{p.technos[0]}</span>
+                                        <h3 className="text-2xl font-bold text-white mb-2 leading-tight group-hover:translate-y-[-4px] transition-transform duration-300">{p.title}</h3>
+                                        <p className="text-sm text-gray-300 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform translate-y-4 group-hover:translate-y-0 delay-75">
+                                            {p.subtitle}
+                                        </p>
 
-                                    <div className="mt-6 inline-flex items-center text-sm font-bold text-white gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 delay-150">
-                                        Découvrir <ArrowRight className="w-4 h-4" />
+                                        <div className="mt-6 inline-flex items-center text-sm font-bold text-white gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 delay-150">
+                                            Découvrir <ArrowRight className="w-4 h-4" />
+                                        </div>
                                     </div>
-                                </div>
-                            </Link>
+                                </Link>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
@@ -356,7 +387,7 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
                     </div>
                 </div>
             </section>
-        </>
+        </PageTransition>
     );
 };
 

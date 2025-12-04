@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const Navigation = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [hoveredTab, setHoveredTab] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -14,7 +16,7 @@ const Navigation = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const navLinkClass = "relative text-sm font-medium text-gray-300 hover:text-white transition-colors cursor-pointer group";
+    const navLinkClass = "relative text-sm font-medium text-gray-300 hover:text-white transition-colors cursor-pointer px-4 py-2";
 
     const scrollTo = (id) => {
         setMobileMenuOpen(false);
@@ -30,23 +32,50 @@ const Navigation = () => {
             <div className="container mx-auto px-6 h-16 flex items-center justify-between">
                 <div
                     onClick={() => scrollTo('hero')}
-                    className="text-2xl font-bold tracking-tighter text-white cursor-pointer flex items-center gap-1 group"
+                    className="text-2xl font-bold tracking-tighter text-white cursor-pointer flex items-center gap-1 group font-display"
                 >
                     Blone Agency
                     <span className="w-2 h-2 rounded-full bg-[#1C7EF2] shadow-[0_0_10px_#1C7EF2] group-hover:scale-150 transition-transform duration-300"></span>
                 </div>
 
                 {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-10">
+                <div className="hidden md:flex items-center gap-2" onMouseLeave={() => setHoveredTab(null)}>
                     {['Services', 'Projets', 'Tarifs'].map((item) => (
-                        <span key={item} onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))} className={navLinkClass}>
+                        <span
+                            key={item}
+                            onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
+                            onMouseEnter={() => setHoveredTab(item)}
+                            className={navLinkClass}
+                            style={{ position: 'relative' }}
+                        >
                             {item}
-                            <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#1C7EF2] transition-all duration-300 group-hover:w-full"></span>
+                            {hoveredTab === item && (
+                                <motion.span
+                                    layoutId="nav-glow"
+                                    className="absolute inset-0 rounded-full bg-white/5"
+                                    transition={{
+                                        type: "spring",
+                                        bounce: 0.2,
+                                        duration: 0.6
+                                    }}
+                                />
+                            )}
+                            {hoveredTab === item && (
+                                <motion.span
+                                    layoutId="nav-dot"
+                                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#1C7EF2] rounded-full shadow-[0_0_8px_2px_rgba(28,126,242,0.5)]"
+                                    transition={{
+                                        type: "spring",
+                                        bounce: 0.2,
+                                        duration: 0.6
+                                    }}
+                                />
+                            )}
                         </span>
                     ))}
                     <button
                         onClick={() => scrollTo('contact')}
-                        className="group relative px-6 py-2.5 rounded-full overflow-hidden bg-white/5 border border-white/10 hover:border-[#1C7EF2]/50 transition-all duration-300"
+                        className="ml-4 group relative px-6 py-2.5 rounded-full overflow-hidden bg-white/5 border border-white/10 hover:border-[#1C7EF2]/50 transition-all duration-300"
                     >
                         <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-[#1C7EF2]/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <span className="relative text-sm font-semibold text-white group-hover:text-blue-200 transition-colors">Contact</span>
