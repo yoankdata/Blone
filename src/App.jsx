@@ -10,6 +10,8 @@ import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ProjectDetail from './pages/ProjectDetail';
+import MentionsLegales from './pages/MentionsLegales';
+import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
 
 // --- MAIN APPLICATION COMPONENT ---
 
@@ -65,6 +67,8 @@ const App = () => {
                         />
                     } />
                     <Route path="/realisations/:slug" element={<ProjectDetail />} />
+                    <Route path="/mentions-legales" element={<MentionsLegales />} />
+                    <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
                 </Routes>
             </AnimatePresence>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => (
     <footer className="relative bg-[#050D18] border-t border-white/5 pt-24 pb-12 text-white overflow-hidden">
@@ -31,8 +32,8 @@ const Footer = () => (
             <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-medium uppercase tracking-widest">
                 <p>© {new Date().getFullYear()} Blone Agency.</p>
                 <div className="flex gap-8 mt-4 md:mt-0">
-                    <span className="hover:text-white cursor-pointer transition-colors">Mentions légales</span>
-                    <span className="hover:text-white cursor-pointer transition-colors">Confidentialité</span>
+                    <Link to="/mentions-legales" className="hover:text-white cursor-pointer transition-colors">Mentions légales</Link>
+                    <Link to="/politique-confidentialite" className="hover:text-white cursor-pointer transition-colors">Confidentialité</Link>
                 </div>
             </div>
         </div>
