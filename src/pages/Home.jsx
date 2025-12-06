@@ -375,7 +375,7 @@ const Home = ({ submitHandler, isReady, formStatus }) => {
 
                         <div className="mt-12 pt-8 border-t border-white/5 text-center">
                             <a
-                                href="#"
+                                href="https://wa.me/33666291353"
                                 className="inline-flex items-center gap-3 text-white/70 hover:text-green-400 transition-colors group"
                             >
                                 <span className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-green-400/10 transition-colors">

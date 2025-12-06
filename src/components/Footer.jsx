@@ -15,11 +15,17 @@ const Footer = () => (
                         Web · Data · Automation
                     </p>
                 </div>
-                <a href="mailto:contact@bloneagency.fr" className="group flex items-center gap-3 text-xl font-light hover:text-[#1C7EF2] transition-colors">
+                <a href="mailto:contact@kademya-ci.com" className="group flex items-center gap-3 text-xl font-light hover:text-[#1C7EF2] transition-colors">
                     <span className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center group-hover:border-[#1C7EF2] transition-colors">
                         <ArrowRight className="w-4 h-4 group-hover:-rotate-45 transition-transform duration-300" />
                     </span>
-                    contact@bloneagency.fr
+                    contact@kademya-ci.com
+                </a>
+                <a href="tel:+33666291353" className="group flex items-center gap-3 text-xl font-light hover:text-[#1C7EF2] transition-colors mt-4 md:mt-0 md:ml-8">
+                    <span className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center group-hover:border-[#1C7EF2] transition-colors">
+                        <ArrowRight className="w-4 h-4 group-hover:-rotate-45 transition-transform duration-300" />
+                    </span>
+                    06 66 29 13 53
                 </a>
             </div>
             <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-medium uppercase tracking-widest">
